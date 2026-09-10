@@ -1,4 +1,8 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
+github.com/cwbudde/go-hdf5 v0.15.0 h1:fw9lXkRwtSgav0h+UcpsbowEi6vmOHBNW7rchEserF0=
+github.com/cwbudde/go-hdf5 v0.15.0/go.mod h1:0raz6R+Vee4c9Xc1EHtu1wvBWMD32hPO+55CdISBLcw=
+github.com/cwbudde/go-sofa v0.1.0 h1:Vh3mvZc3sVHdTmJXO3iXiCjbQY6BrAiJ6AaicU/w/oY=
+github.com/cwbudde/go-sofa v0.1.0/go.mod h1:cr594AObEsKfjBYsTMrqLEJCKVttX+SRu1BYtzlAy9U=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
