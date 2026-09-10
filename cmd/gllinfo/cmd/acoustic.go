@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/cwbudde/gll-tools/internal/viz"
 	"github.com/cwbudde/gll-tools/pkg/gll"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -32,6 +34,9 @@ var acousticCmd = &cobra.Command{
 	Short: "Display acoustic data from a GLL file",
 	Long: `Display detailed acoustic data including source definitions,
 balloon directivity data, and frequency response information.
+With --json --responses, emit all stored levels, phases and delays for the
+selected source(s), including the separate on-axis spectrum. --max-responses
+only limits the human-readable display.
 
 Examples:
   gllinfo acoustic speaker.gll                    # Show all sources
@@ -76,6 +81,24 @@ func runAcoustic(cmd *cobra.Command, args []string) error {
 
 	sources := file.Database.SourceDefinitions
 	placementsByDef := collectSourcePlacements(file.Database)
+	if viper.GetBool("json") && exportCSV == "" && exportCLF == "" && exportFRD == "" {
+		if sourceIndex >= len(sources) {
+			return fmt.Errorf("source index %d out of range (0-%d)", sourceIndex, len(sources)-1)
+		}
+		if sourceIndex >= 0 {
+			sources = sources[sourceIndex : sourceIndex+1]
+		}
+		if loadResponses {
+			for _, src := range sources {
+				if src.Definition != nil && src.Definition.BalloonData != nil {
+					if err := gll.LoadBalloonResponses(f, src.Definition.BalloonData); err != nil {
+						return fmt.Errorf("loading %s: %w", src.Key, err)
+					}
+				}
+			}
+		}
+		return json.NewEncoder(cmd.OutOrStdout()).Encode(sources)
+	}
 
 	// If specific source requested
 	if sourceIndex >= 0 {
