@@ -572,3 +572,29 @@ func TestReadCompressedResponseData_Errors(t *testing.T) {
 		}
 	})
 }
+
+func TestParseInputConfigsBufferRetainsAllRouting(t *testing.T) {
+	body := new(bytes.Buffer)
+	_ = binary.Write(body, binary.LittleEndian, int16(0))
+	_ = binary.Write(body, binary.LittleEndian, int16(0))
+	_ = binary.Write(body, binary.LittleEndian, int32(2))
+	for _, key := range []string{"90", "120"} {
+		input := buildBoxInputBlock(key, []SourceFilterLink{{SourceKey: "LF-Sim", FilterGrpKey: "LPF"}}, 12, 1)
+		body.Write(buildBoxInputConfigBlock(key, key, [][]byte{input}))
+	}
+	raw := withBlockSize(body.Bytes())
+	br := internalgll.NewByteReader(bytes.NewReader(raw))
+	configs, err := parseInputConfigsBuffer(br, int64(len(raw)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(configs) != 2 {
+		t.Fatalf("got %d configurations, want 2", len(configs))
+	}
+	if configs[1].Key != "120" || configs[1].Inputs[0].SourceLinks[0].FilterGrpKey != "LPF" {
+		t.Fatalf("routing lost: %+v", configs)
+	}
+	if br.Offset() != int64(len(raw)) {
+		t.Fatal("reader did not advance past buffer")
+	}
+}

@@ -27,38 +27,11 @@ type BoxInputConfig struct {
 	Inputs []BoxInput `json:"inputs"`
 }
 
-// parseInputConfigBuffer parses the InputConfigBuffer from a BoxType
-// This buffer can be empty (block_size=0) or contain a single BoxInputConfig block
-func parseInputConfigBuffer(br *gll.ByteReader, maxOffset int64) (*BoxInputConfig, error) {
-	if br.Offset() >= maxOffset {
-		return nil, nil
-	}
-
-	blockSize, err := br.ReadInt32()
-	if err != nil {
-		return nil, fmt.Errorf("reading input config buffer size: %w", err)
-	}
-
-	if blockSize <= 0 {
-		// Empty buffer
-		return nil, nil
-	}
-
-	startOffset := br.Offset()
-	endOffset := startOffset + int64(blockSize) - 4
-	if endOffset > maxOffset {
-		endOffset = maxOffset
-	}
-
-	// Parse the BoxInputConfig block
-	config, err := parseBoxInputConfig(br, endOffset)
-	if err != nil {
-		_, _ = br.Seek(endOffset, io.SeekStart)
-		return nil, err
-	}
-
-	_, _ = br.Seek(endOffset, io.SeekStart)
-	return config, nil
+// parseInputConfigsBuffer reads every configuration in the counted buffer.
+func parseInputConfigsBuffer(br *gll.ByteReader, maxOffset int64) ([]BoxInputConfig, error) {
+	return parseBufferItems(br, maxOffset, 0, func(br *gll.ByteReader) (*BoxInputConfig, error) {
+		return parseBoxInputConfig(br, maxOffset)
+	})
 }
 
 // parseBoxInputConfig parses a BoxInputConfig block

@@ -254,6 +254,13 @@ Used for pin points and other labeled 3D coordinates.
 
 Defines input channel wiring configurations for a box type.
 
+The enclosing `BoxInputConfigBuffer` is a counted buffer: `block_size` (int32),
+`vcheck` (int16, 0), `sver` (int16), `count` (int32), followed by that many
+`BoxInputConfig` blocks. It is not a wrapper around a single configuration.
+ViFORCE V10b contains four configurations for its ViF box (90, 105 left,
+105 right, 120), each with eight source/filter links. These agree with the
+provider's XGLL `Input Configurations` and `Links` sections.
+
 | Field      | Type           | Description               |
 | ---------- | -------------- | ------------------------- |
 | block_size | int32          | Total block size          |

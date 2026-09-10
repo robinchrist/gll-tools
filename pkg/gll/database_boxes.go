@@ -18,18 +18,19 @@ type DataFile struct {
 
 // BoxType represents a speaker cabinet type
 type BoxType struct {
-	Label                  string          `json:"label"`
-	Key                    string          `json:"key"`
-	Sources                []string        `json:"sources,omitempty"` // Keys of acoustic sources
-	SourcePlacements       []BoxSource     `json:"source_placements,omitempty"`
-	InputConfig            *BoxInputConfig `json:"input_config,omitempty"` // Embedded input configuration
-	CaseGeometry           *CaseGeometry   `json:"case_geometry,omitempty"`
-	NextPivot              *Vector3D       `json:"next_pivot,omitempty"`
-	ReferencePoint         *Vector3D       `json:"reference_point,omitempty"`
-	CenterOfMass           *Vector3D       `json:"center_of_mass,omitempty"`
-	Weight                 float64         `json:"weight,omitempty"`                   // kg
-	VerticalOpeningAngle   float64         `json:"vertical_opening_angle,omitempty"`   // degrees
-	HorizontalOpeningAngle float64         `json:"horizontal_opening_angle,omitempty"` // degrees
+	Label                  string           `json:"label"`
+	Key                    string           `json:"key"`
+	Sources                []string         `json:"sources,omitempty"` // Keys of acoustic sources
+	SourcePlacements       []BoxSource      `json:"source_placements,omitempty"`
+	InputConfigs           []BoxInputConfig `json:"input_configs,omitempty"`
+	InputConfig            *BoxInputConfig  `json:"input_config,omitempty"` // Embedded input configuration
+	CaseGeometry           *CaseGeometry    `json:"case_geometry,omitempty"`
+	NextPivot              *Vector3D        `json:"next_pivot,omitempty"`
+	ReferencePoint         *Vector3D        `json:"reference_point,omitempty"`
+	CenterOfMass           *Vector3D        `json:"center_of_mass,omitempty"`
+	Weight                 float64          `json:"weight,omitempty"`                   // kg
+	VerticalOpeningAngle   float64          `json:"vertical_opening_angle,omitempty"`   // degrees
+	HorizontalOpeningAngle float64          `json:"horizontal_opening_angle,omitempty"` // degrees
 }
 
 // IncludeFile represents an additional data file embedded in the GLL
@@ -383,9 +384,12 @@ func parseBoxType(br *gll.ByteReader, maxOffset int64) (*BoxType, error) {
 	}
 
 	// Parse InputConfigBuffer
-	inputConfig, err := parseInputConfigBuffer(br, endOffset)
+	inputConfigs, err := parseInputConfigsBuffer(br, endOffset)
 	if err == nil {
-		box.InputConfig = inputConfig
+		box.InputConfigs = inputConfigs
+		if len(inputConfigs) > 0 {
+			box.InputConfig = &box.InputConfigs[0] // Compatibility: first configuration.
+		}
 	}
 
 	// Parse CaseGeometry (3D mesh data)
