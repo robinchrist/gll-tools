@@ -42,18 +42,18 @@ func fakeBalloon(level []float64, phase []float64) (*gll.SourceDefinition, *gll.
 	}
 
 	// 6 responses: index layout per ResponseIndex with parCount=3, no FHO:
-	//   0: (mer=0, par=0) south pole
-	//   1: (mer=0, par=1) equator at meridian 0
-	//   2: (mer=0, par=2) north pole
-	//   3: (mer=1, par=1) equator at meridian 1 (90°)
-	//   4: (mer=2, par=1) equator at meridian 2 (180°)
-	//   5: (mer=3, par=1) equator at meridian 3 (270°)
+	//   0: (mer=0, par=0) front pole
+	//   1: (mer=0, par=1) top
+	//   2: (mer=0, par=2) rear pole
+	//   3: (mer=1, par=1) +Y (meridian 90°)
+	//   4: (mer=2, par=1) bottom (meridian 180°)
+	//   5: (mer=3, par=1) -Y (meridian 270°)
 	responses := []gll.TransferFunction{
-		mkResp(-3),  // south pole, slight loss
-		mkResp(0),   // on-axis equator
-		mkResp(-3),  // north pole, slight loss
+		mkResp(0),   // front/on-axis
+		mkResp(-3),  // top
+		mkResp(-12), // rear
 		mkResp(-6),  // 90° off-axis
-		mkResp(-12), // behind
+		mkResp(-12), // bottom
 		mkResp(-6),  // 270° off-axis
 	}
 	balloon.Responses = responses
@@ -80,9 +80,9 @@ func TestBuildSOFAFile_Relative(t *testing.T) {
 		t.Errorf("Frequencies = %v, want [100, 200]", f.Frequencies)
 	}
 
-	// Relative mode: the on-axis equator entry (mer=0,par=1) carries the raw
+	// Relative mode: the on-axis entry (mer=0,par=0) carries the raw
 	// balloon level [90, 92] dB → magnitudes 10^(90/20), 10^(92/20).
-	row := 0*parCount + 1
+	row := 0*parCount + 0
 	if got := f.TFReal[row][0][0]; math.Abs(got-math.Pow(10, 90.0/20)) > 1e-3 {
 		t.Errorf("TFReal[on-axis][0][0] = %g, want %g", got, math.Pow(10, 90.0/20))
 	}
@@ -93,8 +93,8 @@ func TestBuildSOFAFile_Relative(t *testing.T) {
 		t.Errorf("on-axis SourcePosition = %+v, want (1,0,0)", pos)
 	}
 
-	// Behind (mer=2 → 180°, par=1 → equator) should be at (-1, 0, 0).
-	pos = f.SourcePositions[2*parCount+1]
+	// Rear pole (parallel=180 degrees) should be at (-1, 0, 0).
+	pos = f.SourcePositions[2]
 	if math.Abs(pos.X+1) > 1e-9 || math.Abs(pos.Y) > 1e-9 || math.Abs(pos.Z) > 1e-9 {
 		t.Errorf("behind SourcePosition = %+v, want (-1,0,0)", pos)
 	}
@@ -126,7 +126,7 @@ func TestBuildSOFAFile_Combined(t *testing.T) {
 	}
 
 	const parCount = 3
-	row := 0*parCount + 1 // on-axis
+	row := 0*parCount + 0 // on-axis
 	want := math.Pow(10, 90.0/20)
 	if got := f.TFReal[row][0][0]; math.Abs(got-want) > 1e-3 {
 		t.Errorf("combined on-axis TFReal[0] = %g, want %g (= 10^(90/20))", got, want)

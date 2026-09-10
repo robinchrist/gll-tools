@@ -130,7 +130,7 @@ func BuildSOFAFile(src *gll.SourceDefinition, balloon *gll.BalloonData, ctx Buil
 		Title:                  title,
 		Organization:           ctx.Manufacturer,
 		ApplicationName:        "gll-tools/sofaexport",
-		ApplicationVersion:     "0.1",
+		ApplicationVersion:     "0.2",
 		DateCreated:            now,
 		DateModified:           now,
 		Comment:                buildComment(src, opts.Relative),
@@ -165,7 +165,7 @@ func buildComment(src *gll.SourceDefinition, relative bool) string {
 		mode = "relative balloon (no on-axis combine)"
 	}
 	return fmt.Sprintf(
-		"GLL→SOFA export, mode=%s. NominalBandwidth=%g..%g Hz, MeasuredVoltage=%gV, MeasuredDistance=%gm, Temperature=%g°C, Humidity=%g%%, AtmosphericPressure=%gkPa.",
+		"GLL→SOFA export, mode=%s; stored delays included, source-local coordinates, no cabinet rotation or filter bank applied. NominalBandwidth=%g..%g Hz, MeasuredVoltage=%gV, MeasuredDistance=%gm, Temperature=%g°C, Humidity=%g%%, AtmosphericPressure=%gkPa.",
 		mode,
 		src.NominalBandwidthFrom, src.NominalBandwidthTo,
 		src.MeasuredVoltage, src.MeasuredDistance,

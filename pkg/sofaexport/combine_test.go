@@ -107,3 +107,28 @@ func TestCombineResponse_GridMismatch(t *testing.T) {
 		t.Fatal("expected grid-mismatch error, got nil")
 	}
 }
+
+// A 5 ms differential delay makes equal 100 Hz sources cancel. Losing the
+// separate delay fields changes destructive interference to reinforcement.
+func TestCombineResponse_StoredDelaysAndReferenceLevel(t *testing.T) {
+	def := gll.LogSpectrumDefinition{BandsPerOctave: 1, StartFreq: 100, PointCount: 1}
+	resp := &gll.TransferFunction{Definition: def, Level: []float64{0}, Phase: []float64{0}, Delay: .002}
+	src := &gll.SourceDefinition{OnAxisLevel: 94, OnAxisSpectrum: &gll.TransferFunction{
+		Definition: def, Level: []float64{94}, Phase: []float64{0}, Delay: .003,
+	}}
+	re, im, err := combineResponse(resp, src, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	amplitude := math.Pow(10, 94.0/20)
+	if math.Abs(re[0]+amplitude) > 1e-8 || math.Abs(im[0]) > 1e-8 {
+		t.Fatalf("delayed sum does not cancel reference: %g + %gi", re[0]+amplitude, im[0])
+	}
+	re, im, err = combineResponse(resp, src, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(re[0]-math.Cos(-.4*math.Pi)) > 1e-12 || math.Abs(im[0]-math.Sin(-.4*math.Pi)) > 1e-12 {
+		t.Fatalf("relative mode lost balloon delay: %g + %gi", re[0], im[0])
+	}
+}

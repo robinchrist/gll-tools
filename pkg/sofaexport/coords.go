@@ -9,15 +9,17 @@ import (
 // gridAngles returns the (azimuthDeg, elevationDeg) pair for a given
 // (merIdx, parIdx) pair in the GLL angular grid.
 //
-// GLL convention (verified against pkg/gll/array_calculations.go
-// GetResponseAtAngle): meridian phi sweeps 0..360 along the equator,
-// parallel parIdx maps to elevation theta = parIdx*parStep - 90, so
-// parIdx=0 corresponds to theta=-90° (south pole, -Z) and the largest
-// parIdx corresponds to theta=+90° (north pole, +Z). On-axis (+X) is
-// (mer=0, theta=0).
+// GLL parallel is the polar angle from the firing axis (+X): 0 is front,
+// 180 is rear. Meridian rotates around that axis, from +Z toward +Y.
+// Convert that direction to SOFA azimuth/elevation; parallel is not elevation.
 func gridAngles(merIdx, parIdx int, merStep, parStep float64) (azDeg, elDeg float64) {
-	azDeg = float64(merIdx) * merStep
-	elDeg = float64(parIdx)*parStep - 90.0
+	mer := float64(merIdx) * merStep * math.Pi / 180
+	par := float64(parIdx) * parStep * math.Pi / 180
+	x := math.Cos(par)
+	y := math.Sin(par) * math.Sin(mer)
+	z := math.Sin(par) * math.Cos(mer)
+	azDeg = math.Atan2(y, x) * 180 / math.Pi
+	elDeg = math.Atan2(z, math.Hypot(x, y)) * 180 / math.Pi
 	return azDeg, elDeg
 }
 

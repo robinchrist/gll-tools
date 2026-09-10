@@ -15,11 +15,12 @@ func complexFromLevelPhase(levelDB, phaseRad float64) (re, im float64) {
 }
 
 // combineResponse converts a single balloon response to (real, imag) slices,
-// optionally combined with the source's OnAxisSpectrum and OnAxisLevel gain.
+// optionally combined with the source's absolute OnAxisSpectrum.
 //
 // When relative is true the response is taken as-is. When false (the default)
 // the response is multiplied by srcDef.OnAxisSpectrum (pointwise complex
-// multiply, same frequency grid required) and scaled by 10^(OnAxisLevel/20).
+// multiply, same frequency grid required). OnAxisLevel is a reference level,
+// not an additional gain. Both stored delays are included in the complex TF.
 func combineResponse(resp *gll.TransferFunction, srcDef *gll.SourceDefinition, relative bool) (reArr, imArr []float64, err error) {
 	if resp == nil {
 		return nil, nil, fmt.Errorf("nil response")
@@ -34,12 +35,16 @@ func combineResponse(resp *gll.TransferFunction, srcDef *gll.SourceDefinition, r
 
 	if relative || srcDef == nil || srcDef.OnAxisSpectrum == nil {
 		for i := range n {
-			reArr[i], imArr[i] = complexFromLevelPhase(resp.Level[i], resp.Phase[i])
+			phase := resp.Phase[i] - 2*math.Pi*resp.Definition.GetFrequency(i)*resp.Delay
+			reArr[i], imArr[i] = complexFromLevelPhase(resp.Level[i], phase)
 		}
 		return reArr, imArr, nil
 	}
 
 	onAxis := srcDef.OnAxisSpectrum
+	if len(onAxis.Phase) != n {
+		return nil, nil, fmt.Errorf("OnAxisSpectrum phase length %d does not match response length %d", len(onAxis.Phase), n)
+	}
 	if len(onAxis.Level) != n {
 		return nil, nil, fmt.Errorf("OnAxisSpectrum length %d does not match response length %d", len(onAxis.Level), n)
 	}
@@ -48,14 +53,13 @@ func combineResponse(resp *gll.TransferFunction, srcDef *gll.SourceDefinition, r
 			onAxis.Definition, resp.Definition)
 	}
 
-	gain := math.Pow(10, srcDef.OnAxisLevel/20.0)
 	for i := range n {
 		// Combined level/phase: add levels, add phases (complex multiplication).
 		level := resp.Level[i] + onAxis.Level[i]
-		phase := resp.Phase[i] + onAxis.Phase[i]
+		phase := resp.Phase[i] + onAxis.Phase[i] - 2*math.Pi*resp.Definition.GetFrequency(i)*(resp.Delay+onAxis.Delay)
 		r, im := complexFromLevelPhase(level, phase)
-		reArr[i] = gain * r
-		imArr[i] = gain * im
+		reArr[i] = r
+		imArr[i] = im
 	}
 	return reArr, imArr, nil
 }

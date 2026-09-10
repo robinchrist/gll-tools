@@ -4,7 +4,7 @@ package sofaexport
 type Options struct {
 	// Relative emits raw balloon transfer functions (no on-axis combine).
 	// When false (default), each direction's TF is multiplied by
-	// SourceDefinition.OnAxisSpectrum and scaled by OnAxisLevel.
+	// SourceDefinition.OnAxisSpectrum. Stored delays are folded into phase.
 	Relative bool
 
 	// OutputDir is the directory where .sofa files are written. Defaults to ".".

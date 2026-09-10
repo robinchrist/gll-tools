@@ -41,15 +41,15 @@ func TestGridAngles(t *testing.T) {
 		merIdx, parIdx int
 		azDeg, elDeg   float64
 	}{
-		{0, 0, 0, -90},   // south pole at first meridian
-		{0, 18, 0, 0},    // on-axis equator
-		{0, 36, 0, 90},   // north pole at first meridian
+		{0, 0, 0, 0},     // front, independent of meridian
+		{0, 18, 0, 90},   // top
+		{0, 36, 180, 0},  // rear
 		{18, 18, 90, 0},  // east equator
-		{36, 18, 180, 0}, // behind equator
+		{36, 18, 0, -90}, // bottom
 	}
 	for _, tt := range tests {
 		az, el := gridAngles(tt.merIdx, tt.parIdx, merStep, parStep)
-		if az != tt.azDeg || el != tt.elDeg {
+		if math.Abs(el-tt.elDeg) > 1e-9 || (math.Abs(tt.elDeg) != 90 && math.Abs(az-tt.azDeg) > 1e-9) {
 			t.Errorf("gridAngles(%d,%d) = (%g,%g), want (%g,%g)",
 				tt.merIdx, tt.parIdx, az, el, tt.azDeg, tt.elDeg)
 		}
